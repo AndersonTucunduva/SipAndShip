@@ -6,3 +6,98 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Product {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String?
+  price       Float // Preço de venda padrão
+  stock       Int       @default(0)
+  category    Category? @relation(fields: [categoryId], references: [id])
+  categoryId  Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relacionamentos
+  sales     SaleProduct[] // Relação com as vendas
+  purchases PurchaseProduct[] // Relação com as compras
+  Sale      Sale[]
+  Purchase  Purchase[]
+}
+
+model Category {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String?
+
+  // Relacionamento
+  products Product[]
+}
+
+model Customer {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String?  @unique
+  phone     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamento
+  sales Sale[]
+}
+
+model Sale {
+  id         Int      @id @default(autoincrement())
+  date       DateTime @default(now())
+  total      Float
+  customerId Int
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  // Relacionamento com SaleProduct
+  products  SaleProduct[]
+  Product   Product?      @relation(fields: [productId], references: [id])
+  productId Int?
+}
+
+model SaleProduct {
+  id        Int     @id @default(autoincrement())
+  saleId    Int
+  sale      Sale    @relation(fields: [saleId], references: [id])
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  salePrice Float // Preço de venda nesta transação
+}
+
+model Purchase {
+  id         Int      @id @default(autoincrement())
+  date       DateTime @default(now())
+  supplierId Int
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+  total      Float
+
+  // Relacionamento com PurchaseProduct
+  products  PurchaseProduct[]
+  Product   Product?          @relation(fields: [productId], references: [id])
+  productId Int?
+}
+
+model PurchaseProduct {
+  id            Int      @id @default(autoincrement())
+  purchaseId    Int
+  purchase      Purchase @relation(fields: [purchaseId], references: [id])
+  productId     Int
+  product       Product  @relation(fields: [productId], references: [id])
+  quantity      Int
+  purchasePrice Float // Preço de compra nesta transação
+}
+
+model Supplier {
+  id          Int     @id @default(autoincrement())
+  name        String
+  contactInfo String?
+
+  // Relacionamento
+  purchases Purchase[]
+}
